@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis Finanzas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f7f5; --card:#ffffff; --border:#e5e3dd; --text:#22221f; --muted:#7a7972;
+    --income:#0f6e56; --income-bg:#e1f5ee; --expense:#993c1d; --expense-bg:#faece7;
+    --accent:#378add; --accent-bg:#e6f1fb;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Montserrat',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-weight:300;
+    background:var(--bg); color:var(--text); margin:0; padding:20px 14px 40px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  h1{font-size:20px;font-weight:500;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+  .banner{background:var(--accent-bg);color:#0c447c;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px;display:none;}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  .metric{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
+  .metric .label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .metric .value{font-size:16px;font-weight:600;}
+  .value.pos{color:var(--income);}
+  .value.neg{color:var(--expense);}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;}
+  label:first-child{margin-top:0;}
+  input,select{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;
+    font-size:14px;background:#fff;color:var(--text);
+  }
+  .row{display:flex;gap:10px;}
+  .row>div{flex:1;}
+  .type-toggle{display:flex;gap:8px;margin:10px 0 4px;}
+  .type-btn{
+    flex:1;padding:9px;border:1px solid var(--border);border-radius:8px;background:#fff;
+    cursor:pointer;font-size:14px;color:var(--muted);text-align:center;
+  }
+  .type-btn.active-income{background:var(--income-bg);border-color:var(--income);color:var(--income);font-weight:600;}
+  .type-btn.active-expense{background:var(--expense-bg);border-color:var(--expense);color:var(--expense);font-weight:600;}
+  .src-toggle{display:flex;gap:8px;margin:10px 0 4px;}
+  .src-btn{
+    flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff;
+    cursor:pointer;font-size:13px;color:var(--muted);text-align:center;
+  }
+  .src-btn.active{background:var(--accent-bg);border-color:var(--accent);color:#0c447c;font-weight:600;}
+  button.submit{
+    margin-top:14px;width:100%;padding:11px;border:none;border-radius:8px;
+    background:var(--text);color:#fff;font-size:14px;font-weight:600;cursor:pointer;
+  }
+  button.secondary{
+    width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;
+    background:#fff;color:var(--text);font-size:13px;cursor:pointer;margin-top:8px;
+  }
+  .error{color:var(--expense);font-size:12px;margin-top:6px;display:none;}
+  .list-title{font-size:14px;font-weight:600;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;}
+  .list-title .toggle{font-size:12px;color:var(--accent);cursor:pointer;font-weight:400;}
+  .txn{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;
+  }
+  .txn:last-child{border-bottom:none;}
+  .txn .cat{font-weight:600;}
+  .txn .meta{color:var(--muted);font-size:11px;}
+  .txn .amt.pos{color:var(--income);font-weight:600;}
+  .txn .amt.neg{color:var(--expense);font-weight:600;}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}
+  .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;margin-left:8px;}
+  .filters{display:flex;gap:8px;margin-bottom:10px;}
+  .filters select{flex:1;}
+  .src-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .src-card{border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+  .src-card .title{font-size:12px;font-weight:600;margin-bottom:6px;}
+  .src-card .line{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:2px;}
+  .src-card .line b{color:var(--text);font-weight:600;}
+  .cat-manage{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border);}
+  .cat-manage:last-child{border-bottom:none;}
+  .cat-manage button{background:none;border:none;color:var(--expense);cursor:pointer;font-size:12px;}
+  .addcat{display:flex;gap:8px;margin-top:10px;}
+  .addcat input{flex:1;}
+  .addcat button{padding:0 14px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;}
+  details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);list-style:none;}
+  details summary::-webkit-details-marker{display:none;}
+  .cat-group-label{font-size:11px;color:var(--muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.03em;}
+  .cat-group-label:first-child{margin-top:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mis finanzas</h1>
+  <p class="sub">Registra cada movimiento con su categoría.</p>
+
+  <div class="banner" id="reminderBanner">Ya pasan las 3pm y todavía no cargaste ningún movimiento hoy. Aprovecha de revisar tu correo del banco.</div>
+
+  <div class="summary">
+    <div class="metric"><div class="label">Saldo total</div><div class="value" id="balance">$0</div></div>
+    <div class="metric"><div class="label">Ingresos</div><div class="value pos" id="totalIncome">$0</div></div>
+    <div class="metric"><div class="label">Gastos</div><div class="value neg" id="totalExpense">$0</div></div>
+  </div>
+
+  <div class="card">
+    <div class="list-title">Ingreso propio vs. gasto total (mes) <span class="toggle" onclick="toggleSettings()">Configurar saldo inicial ⚙</span></div>
+    <div class="src-summary">
+      <div class="src-card">
+        <div class="title">Ganado por tu cuenta</div>
+        <div class="line" style="font-size:16px;font-weight:600;color:var(--income)"><b id="propioIn">$0</b></div>
+      </div>
+      <div class="src-card">
+        <div class="title">Gastado en total</div>
+        <div class="line" style="font-size:16px;font-weight:600;color:var(--expense)"><b id="monthExpense">$0</b></div>
+      </div>
+    </div>
+    <div class="line" style="margin-top:10px;font-size:13px;">Diferencia: <b id="propioDiff" style="font-size:16px;">$0</b></div>
+    <div class="line" style="font-size:12px;color:var(--muted);" id="propioStatus"></div>
+  </div>
+
+  <div class="card" id="settingsCard" style="display:none;">
+    <div class="list-title">Saldo inicial</div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">El saldo que ya tenías antes de usar esta app (no se cuenta como ingreso).</p>
+    <input type="number" id="baseBalance" placeholder="0">
+    <button class="submit" onclick="saveBaseBalance()">Guardar saldo inicial</button>
+  </div>
+
+  <div class="card">
+    <div class="type-toggle">
+      <div class="type-btn" id="btnIncome" onclick="setType('income')">Ingreso</div>
+      <div class="type-btn" id="btnExpense" onclick="setType('expense')">Gasto</div>
+    </div>
+
+    <div class="src-toggle" id="srcToggleWrap">
+      <div class="src-btn" id="btnMesada" onclick="setSource('Mesada')">Mesada</div>
+      <div class="src-btn" id="btnPropio" onclick="setSource('Propio')">Ingreso propio</div>
+    </div>
+
+    <label>Monto</label>
+    <input type="number" id="amount" placeholder="0" min="0" step="1">
+
+    <label>Categoría <span style="color:var(--expense)">*</span></label>
+    <select id="category">
+      <option value="">Selecciona una categoría</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label>Descripción (opcional)</label>
+        <input type="text" id="desc" placeholder="Ej: supermercado Lider">
+      </div>
+      <div>
+        <label>Fecha</label>
+        <input type="date" id="date">
+      </div>
+    </div>
+
+    <div class="error" id="err"></div>
+    <button class="submit" onclick="addTxn()">Guardar movimiento</button>
+    <button class="secondary" onclick="toggleCatManage()">Editar categorías</button>
+  </div>
+
+  <div class="card" id="catManageCard" style="display:none;">
+    <div class="list-title">Categorías</div>
+    <div class="cat-group-label">Gastos</div>
+    <div id="catListExpense"></div>
+    <div class="addcat"><input type="text" id="newCatExpense" placeholder="Nueva categoría de gasto"><button onclick="addCategory('expense')">Agregar</button></div>
+    <div class="cat-group-label">Ingresos</div>
+    <div id="catListIncome"></div>
+    <div class="addcat"><input type="text" id="newCatIncome" placeholder="Nueva categoría de ingreso"><button onclick="addCategory('income')">Agregar</button></div>
+  </div>
+
+  <div class="card">
+    <div class="list-title">Movimientos</div>
+    <div class="filters">
+      <select id="filterCat" onchange="render()"><option value="">Todas las categorías</option></select>
+      <select id="filterType" onchange="render()">
+        <option value="">Todos</option>
+        <option value="income">Ingresos</option>
+        <option value="expense">Gastos</option>
+      </select>
+    </div>
+    <div id="txnList"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_EXPENSE_CATS = ["Arriendo/Dividendo","Supermercado","Transporte","Salud","Educación","Entretenimiento","Ropa","Servicios básicos","Restaurantes","Otro gasto"];
+const DEFAULT_INCOME_CATS = ["Sueldo","Freelance/Boleta","Regalo","Inversiones","Devolución","Otro ingreso"];
+
+let type = 'expense';
+let source = 'Mesada';
+let txns = [];
+let settings = { baseBalance: 0, categoriesExpense: [...DEFAULT_EXPENSE_CATS], categoriesIncome: [...DEFAULT_INCOME_CATS] };
+
+function setType(t){
+  type = t;
+  document.getElementById('btnIncome').className = 'type-btn' + (t==='income' ? ' active-income':'');
+  document.getElementById('btnExpense').className = 'type-btn' + (t==='expense' ? ' active-expense':'');
+  document.getElementById('srcToggleWrap').style.display = t === 'income' ? 'flex' : 'none';
+  populateCategories();
+}
+
+function setSource(s){
+  source = s;
+  document.getElementById('btnMesada').className = 'src-btn' + (s==='Mesada' ? ' active':'');
+  document.getElementById('btnPropio').className = 'src-btn' + (s==='Propio' ? ' active':'');
+}
+
+function populateCategories(){
+  const sel = document.getElementById('category');
+  const cats = type === 'income' ? settings.categoriesIncome : settings.categoriesExpense;
+  sel.innerHTML = '<option value="">Selecciona una categoría</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+function populateFilterCategories(){
+  const sel = document.getElementById('filterCat');
+  const all = [...new Set(txns.map(t=>t.category))].sort();
+  sel.innerHTML = '<option value="">Todas las categorías</option>' + all.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+function toggleSettings(){
+  const el = document.getElementById('settingsCard');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('baseBalance').value = settings.baseBalance || '';
+}
+
+function toggleCatManage(){
+  const el = document.getElementById('catManageCard');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  renderCatManage();
+}
+
+function renderCatManage(){
+  const exp = document.getElementById('catListExpense');
+  const inc = document.getElementById('catListIncome');
+  exp.innerHTML = settings.categoriesExpense.map(c=>`<div class="cat-manage"><span>${c}</span><button onclick="removeCategory('expense','${c}')">Eliminar</button></div>`).join('') || '<div class="empty">Sin categorías</div>';
+  inc.innerHTML = settings.categoriesIncome.map(c=>`<div class="cat-manage"><span>${c}</span><button onclick="removeCategory('income','${c}')">Eliminar</button></div>`).join('') || '<div class="empty">Sin categorías</div>';
+}
+
+async function addCategory(t){
+  const inputId = t === 'expense' ? 'newCatExpense' : 'newCatIncome';
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if(!val) return;
+  const key = t === 'expense' ? 'categoriesExpense' : 'categoriesIncome';
+  if(!settings[key].includes(val)) settings[key].push(val);
+  input.value = '';
+  await saveSettings();
+  renderCatManage();
+  populateCategories();
+}
+
+async function removeCategory(t, cat){
+  const key = t === 'expense' ? 'categoriesExpense' : 'categoriesIncome';
+  settings[key] = settings[key].filter(c=>c!==cat);
+  await saveSettings();
+  renderCatManage();
+  populateCategories();
+}
+
+async function saveBaseBalance(){
+  const val = parseFloat(document.getElementById('baseBalance').value) || 0;
+  settings.baseBalance = val;
+  await saveSettings();
+  render();
+  toggleSettings();
+}
+
+async function loadSettings(){
+  try{
+    const res = await window.storage.get('settings');
+    if(res){
+      const loaded = JSON.parse(res.value);
+      settings = { ...settings, ...loaded };
+    }
+  }catch(e){ /* usa defaults */ }
+}
+
+async function saveSettings(){
+  try{
+    await window.storage.set('settings', JSON.stringify(settings));
+  }catch(e){ console.error('No se pudo guardar settings', e); }
+}
+
+async function loadTxns(){
+  try{
+    const res = await window.storage.get('transactions');
+    txns = res ? JSON.parse(res.value) : [];
+  }catch(e){ txns = []; }
+}
+
+async function saveTxns(){
+  try{
+    await window.storage.set('transactions', JSON.stringify(txns));
+  }catch(e){ console.error('No se pudo guardar', e); }
+}
+
+function fmt(n){
+  return new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n);
+}
+
+async function addTxn(){
+  const amountEl = document.getElementById('amount');
+  const catEl = document.getElementById('category');
+  const descEl = document.getElementById('desc');
+  const dateEl = document.getElementById('date');
+  const errEl = document.getElementById('err');
+
+  const amount = parseFloat(amountEl.value);
+  const category = catEl.value;
+
+  if(!amount || amount <= 0){
+    errEl.textContent = 'Ingresa un monto válido.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(!category){
+    errEl.textContent = 'Debes seleccionar una categoría antes de guardar.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const txn = {
+    id: Date.now().toString(),
+    type,
+    source: type === 'income' ? source : '',
+    amount,
+    category,
+    desc: descEl.value.trim(),
+    date: dateEl.value || new Date().toISOString().slice(0,10)
+  };
+  txns.unshift(txn);
+  await saveTxns();
+
+  amountEl.value = '';
+  catEl.value = '';
+  descEl.value = '';
+  populateFilterCategories();
+  render();
+}
+
+async function delTxn(id){
+  txns = txns.filter(t=>t.id!==id);
+  await saveTxns();
+  populateFilterCategories();
+  render();
+}
+
+function render(){
+  const filterCat = document.getElementById('filterCat').value;
+  const filterType = document.getElementById('filterType').value;
+  let filtered = txns;
+  if(filterCat) filtered = filtered.filter(t=>t.category===filterCat);
+  if(filterType) filtered = filtered.filter(t=>t.type===filterType);
+
+  const list = document.getElementById('txnList');
+  if(filtered.length===0){
+    list.innerHTML = '<div class="empty">Aún no hay movimientos.</div>';
+  } else {
+    list.innerHTML = filtered.map(t=>`
+      <div class="txn">
+        <div>
+          <div class="cat">${t.category}</div>
+          <div class="meta">${t.source || ''} ${t.desc ? '· ' + t.desc : ''} · ${t.date}</div>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <span class="amt ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>
+          <button class="del" onclick="delTxn('${t.id}')">Eliminar</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const income = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('totalIncome').textContent = fmt(income);
+  document.getElementById('totalExpense').textContent = fmt(expense);
+  const bal = document.getElementById('balance');
+  const total = (settings.baseBalance||0) + income - expense;
+  bal.textContent = fmt(total);
+  bal.className = 'value ' + (total>=0 ? 'pos':'neg');
+
+  const mesadaIn = txns.filter(t=>t.type==='income' && t.source==='Mesada').reduce((s,t)=>s+t.amount,0);
+  const propioIn = txns.filter(t=>t.type==='income' && t.source==='Propio').reduce((s,t)=>s+t.amount,0);
+
+  const currentMonth = new Date().toISOString().slice(0,7);
+  const propioInMonth = txns.filter(t=>t.type==='income' && t.source==='Propio' && t.date.slice(0,7)===currentMonth).reduce((s,t)=>s+t.amount,0);
+  const expenseMonth = txns.filter(t=>t.type==='expense' && t.date.slice(0,7)===currentMonth).reduce((s,t)=>s+t.amount,0);
+  const diff = propioInMonth - expenseMonth;
+
+  document.getElementById('propioIn').textContent = fmt(propioInMonth);
+  document.getElementById('monthExpense').textContent = fmt(expenseMonth);
+  const diffEl = document.getElementById('propioDiff');
+  diffEl.textContent = (diff >= 0 ? '' : '-') + fmt(Math.abs(diff)).replace('-','');
+  diffEl.style.color = diff >= 0 ? 'var(--income)' : 'var(--expense)';
+  const statusEl = document.getElementById('propioStatus');
+  statusEl.textContent = diff >= 0
+    ? 'Te queda margen respecto a lo que has ganado tú este mes.'
+    : 'Ya gastaste más de lo que has ganado tú este mes.';
+
+  updateReminderBanner();
+}
+
+function updateReminderBanner(){
+  const today = new Date().toISOString().slice(0,10);
+  const hasToday = txns.some(t=>t.date===today);
+  const now = new Date();
+  const isAfter3pm = now.getHours() >= 15;
+  document.getElementById('reminderBanner').style.display = (isAfter3pm && !hasToday) ? 'block' : 'none';
+}
+
+async function init(){
+  document.getElementById('date').value = new Date().toISOString().slice(0,10);
+  await loadSettings();
+  await loadTxns();
+  setType('expense');
+  setSource('Mesada');
+  populateFilterCategories();
+  render();
+  setInterval(updateReminderBanner, 60000);
+}
+init();
+</script>
+</body>
+</html>
